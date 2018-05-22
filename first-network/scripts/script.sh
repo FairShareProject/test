@@ -89,7 +89,7 @@ instantiateChaincode 0 1
 
 # Query chaincode on peer0.org1
 echo "Querying chaincode on peer0.org1..."
-chaincodeQuery 1 1 100
+chaincodeQuery 1 1 '{"docType":"aid","familyId":"1","amount":200,"organization":"organization"}' 'a'
 echo "Installing chaincode on peer1.org2..."
  # installChaincode 1 1
 
@@ -102,7 +102,7 @@ echo "Sending invoke transaction on peer0.org1..."
 
 # Query on chaincode on peer1.org2, check if the result is 90
 echo "Querying chaincode on peer1.org2..."
- chaincodeQuery 1 1 100 a
+ # chaincodeQuery 1 1 100
 
 echo
 echo "========= All GOOD, BYFN execution completed =========== "
