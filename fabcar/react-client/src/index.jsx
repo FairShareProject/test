@@ -8,26 +8,33 @@ class App extends React.Component {
     super(props);
     this.state = { 
       items: [],
-     
-    }
+      argsQuery:"",
+      ORG:"",
+      FamilyID:"",
+      Amount:"",
+      Date:""
 
+    }
+     this.onChange=this.onChange.bind(this);
     this.submit=this.submit.bind(this);
    
   }
 
 
-// onChange (e) {
-//     this.setState({
+onChange (e) {
+    this.setState({
      
-//        [e.target.name]: e.target.value });
+       [e.target.name]: e.target.value });
     
-//   }
-  submit(data) {
+  }
+
+  submit(fcn,args) {
     $.ajax({
       type:'POST',
-      url: '/items',
-      data:{key:data}, 
+      url: '/query',
+      data:{fcn:fcn,args:args}, 
       success: (data) => {
+        console.log(typeof data,data)
         this.setState({
           items:data
         })
@@ -37,13 +44,54 @@ class App extends React.Component {
 
   }
 
+
+invoke(fcn,org,famid,amount,date) {
+  console.log(typeof date)
+    $.ajax({
+      type:'POST',
+      url: '/invoke',
+      data:{fcn:fcn,args:[famid,org,amount,date]}, 
+      success: (data) => {
+        console.log(typeof data,data)
+        this.setState({
+          items:data
+        })
+      }
+    });
+
+
+  }
+
+  getAll(fcn,args) {
+    $.ajax({
+      type:'POST',
+      url: '/getAll',
+      data:{fcn:fcn,args:args}, 
+      success: (data) => {
+        console.log(typeof data,data)
+        this.setState({
+          items:data
+        })
+      }
+    });
+  }
+
+
+
   render () {
     return (
       <div>
 
         <h1>Get all the queriees</h1>
-
-          <button  style={{width: 70 }} onClick={()=> this.submit('queryAllAids')}>get the last aid </button>
+          <p>ORG:</p><input name='ORG' onChange={this.onChange} />
+          <p>FamilyID:</p><input name='FamilyID' onChange={this.onChange} />
+          <p>Amount:</p><input name='Amount' onChange={this.onChange} />
+          <p>Date:</p><input name='Date' type="date" onChange={this.onChange} />
+          <p>last Aid for :</p><input name='argsQuery' onChange={this.onChange} />
+          <button  style={{width: 70 }} onClick={()=> this.invoke('newAid',this.state.ORG,this.state.FamilyID,this.state.Amount,this.state.Date)}>submit the last aid </button>
+          <button  style={{width: 70 }} onClick={()=> this.submit('lastAid',this.state.argsQuery)}>get one aid </button>
+          <button  style={{width: 70 }} onClick={()=> this.getAll('aidHistory',this.state.argsQuery)}>get history aid </button>
+          
           
         <List items={this.state.items}/>
     </div>
