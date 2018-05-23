@@ -1,12 +1,17 @@
 import React from 'react';
 import ListItem from './ListItem.jsx';
 
-const List = (props) => (
-  <div>
-    <h4 > {props.items.amount} </h4>
-    <h4 > {props.items.org} </h4>
-    <h4 > {props.items.nationality} </h4>
-  </div>
-)
 
+
+class List extends React.Component {
+	 constructor(props){
+        super(props);
+    }
+	render () {
+  return(<div>
+    		{this.props.items.map((item) => <ListItem item={item}/>)}
+ 		</div>
+	)
+	}
+}
 export default List;
