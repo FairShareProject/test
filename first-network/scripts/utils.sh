@@ -1,13 +1,4 @@
-#
-# Copyright IBM Corp All Rights Reserved
-#
-# SPDX-License-Identifier: Apache-2.0
-#
 
-# This is a collection of bash functions used by different scripts
-
-
-# verify the result of the end-to-end test
 verifyResult () {
 	if [ $1 -ne 0 ] ; then
 		echo "!!!!!!!!!!!!!!! "$2" !!!!!!!!!!!!!!!!"
@@ -36,25 +27,6 @@ setGlobals () {
 		else
 			CORE_PEER_ADDRESS=peer1.org1.example.com:7051
 		fi
-	elif [ $ORG -eq 2 ] ; then
-		CORE_PEER_LOCALMSPID="Org2MSP"
-		CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
-		CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
-		if [ $PEER -eq 0 ]; then
-			CORE_PEER_ADDRESS=peer0.org2.example.com:7051
-		else
-			CORE_PEER_ADDRESS=peer1.org2.example.com:7051
-		fi
-
-	elif [ $ORG -eq 3 ] ; then
-		CORE_PEER_LOCALMSPID="Org3MSP"
-		CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
-		CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp
-		if [ $PEER -eq 0 ]; then
-			CORE_PEER_ADDRESS=peer0.org3.example.com:7051
-		else
-			CORE_PEER_ADDRESS=peer1.org3.example.com:7051
-		fi
 	else
 		echo "================== ERROR !!! ORG Unknown =================="
 	fi
@@ -63,28 +35,7 @@ setGlobals () {
 }
 
 
-updateAnchorPeers() {
-  PEER=$1
-  ORG=$2
-  setGlobals $PEER $ORG
 
-  if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-                set -x
-		peer channel update -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx >&log.txt
-		res=$?
-                set +x
-  else
-                set -x
-		peer channel update -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA >&log.txt
-		res=$?
-                set +x
-  fi
-	cat log.txt
-	verifyResult $res "Anchor peer update failed"
-	echo "===================== Anchor peers for org \"$CORE_PEER_LOCALMSPID\" on \"$CHANNEL_NAME\" is updated successfully ===================== "
-	sleep $DELAY
-	echo
-}
 
 ## Sometimes Join takes time hence RETRY at least for 5 times
 joinChannelWithRetry () {
@@ -133,12 +84,12 @@ instantiateChaincode () {
 	# lets supply it directly as we know it using the "-o" option
 	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
                 set -x
-		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer')" >&log.txt
 		res=$?
                 set +x
 	else
                 set -x
-		peer chaincode instantiate -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+		peer chaincode instantiate -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer')" >&log.txt
 		res=$?
                 set +x
 	fi
@@ -148,27 +99,12 @@ instantiateChaincode () {
 	echo
 }
 
-upgradeChaincode () {
-    PEER=$1
-    ORG=$2
-    setGlobals $PEER $ORG
-
-    set -x
-    peer chaincode upgrade -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 2.0 -c '{"Args":["init","1","90","2","210"]}' -P "OR ('Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')"
-    res=$?
-	set +x
-    cat log.txt
-    verifyResult $res "Chaincode upgrade on org${ORG} peer${PEER} has Failed"
-    echo "===================== Chaincode is upgraded on org${ORG} peer${PEER} ===================== "
-    echo
-}
 
 chaincodeQuery () {
   PEER=$1
   ORG=$2
   setGlobals $PEER $ORG
   EXPECTED_RESULT=$3
-  familyId=$4
   echo "===================== Querying on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME'... ===================== "
   local rc=1
   local starttime=$(date +%s)

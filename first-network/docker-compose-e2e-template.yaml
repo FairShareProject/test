@@ -1,7 +1,3 @@
-# Copyright IBM Corp. All Rights Reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
-#
 
 version: '2'
 
@@ -11,7 +7,7 @@ volumes:
   peer1.org1.example.com:
 
 networks:
-  byfn:
+  network:
 services:
   ca:
     image: hyperledger/fabric-ca:$IMAGE_TAG
@@ -28,7 +24,7 @@ services:
       - ./crypto-config/peerOrganizations/org1.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
     container_name: ca_peerOrg1
     networks:
-      - byfn
+      - network
 
   orderer.example.com:
     extends:
@@ -36,7 +32,7 @@ services:
       service: orderer.example.com
     container_name: orderer.example.com
     networks:
-      - byfn
+      - network
 
   peer0.org1.example.com:
     container_name: peer0.org1.example.com
@@ -44,7 +40,7 @@ services:
       file:  base/docker-compose-base.yaml
       service: peer0.org1.example.com
     networks:
-      - byfn
+      - network
 
   peer1.org1.example.com:
     container_name: peer1.org1.example.com
@@ -52,4 +48,4 @@ services:
       file:  base/docker-compose-base.yaml
       service: peer1.org1.example.com
     networks:
-      - byfn
+      - network

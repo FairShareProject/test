@@ -1,7 +1,7 @@
 #!/bin/bash
 
-./byfn.sh down
+./network.sh down
 
-./byfn.sh generate
+./network.sh generate
 
-./byfn.sh up -s couchdb
+./network.sh up

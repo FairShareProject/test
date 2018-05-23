@@ -7,7 +7,7 @@ echo "\___ \    | |     / _ \   | |_) |   | |  "
 echo " ___) |   | |    / ___ \  |  _ <    | |  "
 echo "|____/    |_|   /_/   \_\ |_| \_\   |_|  "
 echo
-echo "Build your first network (BYFN) end-to-end test"
+echo " end-to-end test"
 echo
 CHANNEL_NAME="$1"
 DELAY="$2"
@@ -23,9 +23,7 @@ MAX_RETRY=5
 ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
 CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
-if [ "$LANGUAGE" = "node" ]; then
-	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
-fi
+
 
 echo "Channel name : "$CHANNEL_NAME
 
@@ -71,17 +69,11 @@ createChannel
 echo "Having all peers join the channel..."
 joinChannel
 
-## Set the anchor peers for each org in the channel
-echo "Updating anchor peers for org1..."
-updateAnchorPeers 0 1
-# echo "Updating anchor peers for org2..."
-# updateAnchorPeers 0 2
-
-## Install chaincode on peer0.org1 and peer0.org2
+## Install chaincode on peer0.org1 and peer1.org1
 echo "Installing chaincode on peer0.org1..."
 installChaincode 0 1
- echo "Install chaincode on peer1.org1..."
- installChaincode 1 1
+echo "Install chaincode on peer1.org1..."
+installChaincode 1 1
 
 # Instantiate chaincode on peer0.org2
 echo "Instantiating chaincode on peer1.org1..."
@@ -89,23 +81,14 @@ instantiateChaincode 0 1
 
 # Query chaincode on peer0.org1
 echo "Querying chaincode on peer0.org1..."
-chaincodeQuery 1 1 '{"docType":"aid","familyId":"1","amount":200,"organization":"organization"}' 'a'
-echo "Installing chaincode on peer1.org2..."
- # installChaincode 1 1
+chaincodeQuery 1 1 '{"docType":"aid","familyId":"1","amount":200,"organization":"organization"}'
 
 # Invoke chaincode on peer0.org1
 echo "Sending invoke transaction on peer0.org1..."
- chaincodeInvoke 0 1
-
-## Install chaincode on peer1.org2
-
-
-# Query on chaincode on peer1.org2, check if the result is 90
-echo "Querying chaincode on peer1.org2..."
- # chaincodeQuery 1 1 100
+chaincodeInvoke 0 1
 
 echo
-echo "========= All GOOD, BYFN execution completed =========== "
+echo "****** execution completed ******"
 echo
 
 echo
