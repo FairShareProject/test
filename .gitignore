@@ -9,6 +9,7 @@
 .DS_Store
 .project
 
+first-network/node_modules
 first-network/channel-artifacts/*.tx
 first-network/channel-artifacts/*.block
 first-network/crypto-config/*

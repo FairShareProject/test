@@ -1,25 +1,19 @@
-'use strict';
-/*
-* Copyright IBM Corp All Rights Reserved
-*
-* SPDX-License-Identifier: Apache-2.0
-*/
-/*
- * Chaincode Invoke
- */
-
+var express = require('express');
+var bodyParser = require('body-parser');
 var Fabric_Client = require('fabric-client');
 var path = require('path');
 var util = require('util');
 var os = require('os');
 
-//
+
 var fabric_client = new Fabric_Client();
 
 // setup the fabric network
 var channel = fabric_client.newChannel('mychannel');
 var peer = fabric_client.newPeer('grpc://localhost:7051');
 channel.addPeer(peer);
+var peer1 = fabric_client.newPeer('grpc://localhost:8051');
+channel.addPeer(peer1);
 var order = fabric_client.newOrderer('grpc://localhost:7050')
 channel.addOrderer(order);
 
@@ -29,9 +23,7 @@ var store_path = path.join(__dirname, 'hfc-key-store');
 console.log('Store path:'+store_path);
 var tx_id = null;
 
-// create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
-Fabric_Client.newDefaultKeyValueStore({ path: store_path
-}).then((state_store) => {
+var keyStore = function(state_store){
 	// assign the store to the fabric client
 	fabric_client.setStateStore(state_store);
 	var crypto_suite = Fabric_Client.newCryptoSuite();
@@ -43,7 +35,52 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 
 	// get the enrolled user from persistence, this user will sign all requests
 	return fabric_client.getUserContext('user1', true);
-}).then((user_from_store) => {
+}
+
+var query = function (req, res) {
+	console.log("getAlllll",req.body)
+	Fabric_Client.newDefaultKeyValueStore({ path: store_path
+}).then(keyStore).then((user_from_store) => {
+	if (user_from_store && user_from_store.isEnrolled()) {
+		console.log('Successfully loaded user1 from persistence');
+		member_user = user_from_store;
+	} else {
+		throw new Error('Failed to get user1.... run registerUser.js');
+	}
+
+	const request = {
+		//targets:[peer,peer1],
+		chaincodeId: 'mycc',
+		fcn: req.body.fcn,
+		args: [req.body.args]
+	};
+
+	// send the query proposal to the peer
+	return channel.queryByChaincode(request);
+}).then((query_responses) => {
+	console.log("Query has completed, checking results");
+	// query_responses could have more than one results if there multiple peers were used as targets
+	if (query_responses && query_responses.length == 2 ) {
+		if (query_responses[0] instanceof Error || query_responses[1] instanceof Error) {
+			console.error("error from query = ", query_responses[0]);
+		} else if(query_responses[0].toString() === query_responses[1].toString()){
+			console.log("Response is ", query_responses[0].toString())
+			console.log('hiiiii', query_responses.toString())
+			res.send(JSON.parse(query_responses[0].toString()))
+		}
+	} else {
+		console.log("No payloads were returned from query");
+	}
+}).catch((err) => {
+	console.error('Failed to query successfully :: ' + err);
+});
+}
+
+
+var invoke = function (req, res) {
+	console.log("invoooookeeee",typeof req.body.args,req.body.args);
+Fabric_Client.newDefaultKeyValueStore({ path: store_path
+}).then(keyStore).then((user_from_store) => {
 	if (user_from_store && user_from_store.isEnrolled()) {
 		console.log('Successfully loaded user1 from persistence');
 		member_user = user_from_store;
@@ -55,14 +92,12 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 	tx_id = fabric_client.newTransactionID();
 	console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
-	// createCar chaincode function - requires 5 args, ex: args: ['CAR12', 'Honda', 'Accord', 'Black', 'Tom'],
-	// changeCarOwner chaincode function - requires 2 args , ex: args: ['CAR10', 'Dave'],
 	// must send the proposal to endorsing peers
 	var request = {
-		//targets: let default to the peer assigned to the client
-		chaincodeId: 'fabcar',
-		fcn: 'newAid',
-		args: ['Edena bi edekom', '12', '18', 'yemni'],
+		targets:[peer],
+		chaincodeId: 'mycc',
+		fcn: req.body.fcn,
+		args: req.body.args,
 		chainId: 'mychannel',
 		txId: tx_id
 	};
@@ -72,6 +107,7 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 }).then((results) => {
 	var proposalResponses = results[0];
 	var proposal = results[1];
+	//console.log('--------->',results[1])
 	let isProposalGood = false;
 	if (proposalResponses && proposalResponses[0].response &&
 		proposalResponses[0].response.status === 200) {
@@ -142,20 +178,27 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 		console.error('Failed to send Proposal or receive valid response. Response null or status is not 200. exiting...');
 		throw new Error('Failed to send Proposal or receive valid response. Response null or status is not 200. exiting...');
 	}
-}).then((results) => {
-	console.log('Send transaction promise and event listener promise have completed');
-	// check the results in the order the promises were added to the promise all list
-	if (results && results[0] && results[0].status === 'SUCCESS') {
-		console.log('Successfully sent transaction to the orderer.');
-	} else {
-		console.error('Failed to order the transaction. Error code: ' + response.status);
-	}
+})
+// .then((results) => {
+// 	console.log('Send transaction promise and event listener promise have completed');
+// 	// check the results in the order the promises were added to the promise all list
+// 	if (results && results[0] && results[0].status === 'SUCCESS') {
+// 		console.log('Successfully sent transaction to the orderer.');
+// 	} else {
+// 		console.error('Failed to order the transaction. Error code: ' + response.status);
+// 	}
 
-	if(results && results[1] && results[1].event_status === 'VALID') {
-		console.log('Successfully committed the change to the ledger by the peer');
-	} else {
-		console.log('Transaction failed to be committed to the ledger due to ::'+results[1].event_status);
-	}
-}).catch((err) => {
+// 	if(results && results[1] && results[1].event_status === 'VALID') {
+// 		console.log('Successfully committed the change to the ledger by the peer');
+// 	} else {
+// 		console.log('Transaction failed to be committed to the ledger due to ::'+results[1].event_status);
+// 	}
+// })
+.catch((err) => {
 	console.error('Failed to invoke successfully :: ' + err);
 });
+}
+
+//module.exports.getAll = getAll
+module.exports.query = query
+module.exports.invoke = invoke
