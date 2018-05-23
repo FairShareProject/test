@@ -24,3 +24,4 @@ chaincode-docker-devmode/chaincode/chaincode_example02/chaincode_example02
 fabcar/node_modules/
 fabcar/package-lock.json
 fabcar/hfc-key-store/
+
