@@ -3,22 +3,15 @@
 export PATH=${PWD}/../bin:${PWD}:$PATH
 export FABRIC_CFG_PATH=${PWD}
 
-# Print the usage message
+
 function printHelp () {
   echo "Usage: "
-  echo "  network.sh up|down|generate|upgrade [-c <channel name>] [-t <timeout>] [-d <delay>] "
+  echo "  network.sh up|down|generate "
   echo "  network.sh -h|--help (print this message)"
   echo "    <mode> - one of 'up', 'down', 'generate'"
   echo "      - 'up' - bring up the network with docker-compose up"
   echo "      - 'down' - clear the network with docker-compose down"
   echo "      - 'generate' - generate required certificates and genesis block"
-  echo "    -c <channel name> - channel name to use (defaults to \"mychannel\")"
-  echo "    -t <timeout> - CLI timeout duration in seconds (defaults to 10)"
-  echo "    -d <delay> - delay duration in seconds (defaults to 3)"
-  echo "Typically, one would first generate the required certificates and "
-  echo "genesis block, then bring up the network. e.g.:"
-  echo "	network.sh generate -c mychannel"
-  echo "	network.sh down -c mychannel"
   echo "	network.sh generate"
   echo "	network.sh up"
   echo "	network.sh down"
@@ -29,7 +22,6 @@ function printHelp () {
 
 
 
-# Generate the needed certificates, the genesis block and start the network.
 function networkUp () {
 
   if [ ! -d "crypto-config" ]; then
@@ -44,8 +36,8 @@ function networkUp () {
     echo "ERROR !!!! Unable to start network"
     exit 1
   fi
-  # now run the end to end script
-  docker exec cli scripts/script.sh $CHANNEL_NAME $CLI_DELAY node $CLI_TIMEOUT
+
+  docker exec cli scripts/script.sh "mychannel" 3 node 10
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Test failed"
     exit 1
@@ -145,7 +137,7 @@ function generateChannelArtifacts() {
   echo "********** Generating channel configuration transaction 'channel.tx' **********"
 
   set -x
-  configtxgen -profile OrgChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+  configtxgen -profile OrgChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID "mychannel"
   res=$?
   set +x
   if [ $res -ne 0 ]; then
@@ -156,7 +148,7 @@ function generateChannelArtifacts() {
   echo
   echo "********** Generating anchor peer update for Org1MSP **********"
   set -x
-  configtxgen -profile OrgChannel -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org1MSP
+  configtxgen -profile OrgChannel -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID "mychannel" -asOrg Org1MSP
   res=$?
   set +x
   if [ $res -ne 0 ]; then
@@ -170,46 +162,31 @@ function generateChannelArtifacts() {
 # Obtain the OS and Architecture string that will be used to select the correct
 # native binaries for your platform
 OS_ARCH=$(echo "$(uname -s|tr '[:upper:]' '[:lower:]'|sed 's/mingw64_nt.*/windows/')-$(uname -m | sed 's/x86_64/amd64/g')" | awk '{print tolower($0)}')
-# timeout duration - the duration the CLI should wait for a response from
-# another container before giving up
-CLI_TIMEOUT=10
-# default for delay between commands
-CLI_DELAY=3
-# channel name defaults to "mychannel"
-CHANNEL_NAME="mychannel"
 
 # Parse commandline args
-if [ "$1" = "-m" ];then	# supports old usage, muscle memory is powerful!
+if [ "$1" = "-m" ];then	
     shift
 fi
 MODE=$1;shift
 
 
 
-while getopts "h?m:c:t:d:" opt; do
+while getopts "h?m:" opt; do
   case "$opt" in
     h|\?)
       printHelp
       exit 0
-    ;;
-    c)  CHANNEL_NAME=$OPTARG
-    ;;
-    t)  CLI_TIMEOUT=$OPTARG
-    ;;
-    d)  CLI_DELAY=$OPTARG
     ;;
   esac
 done
 
 
 
-
-#Create the network using docker compose
 if [ "${MODE}" == "up" ]; then
   networkUp
-elif [ "${MODE}" == "down" ]; then ## Clear the network
+elif [ "${MODE}" == "down" ]; then 
   networkDown
-elif [ "${MODE}" == "generate" ]; then ## Generate Artifacts
+elif [ "${MODE}" == "generate" ]; then 
   generateCerts
   replacePrivateKey
   generateChannelArtifacts
