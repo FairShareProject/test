@@ -9,18 +9,18 @@
 .DS_Store
 .project
 
-FairShare/node_modules
-FairShare/channel-artifacts/*.tx
-FairShare/channel-artifacts/*.block
-FairShare/crypto-config/*
-FairShare/docker-compose-e2e.yaml
-FairShare/ledgers
-FairShare/ledgers-backup
-FairShare/hfc-key-store/
+network/node_modules
+network/channel-artifacts/*.tx
+network/channel-artifacts/*.block
+network/crypto-config/*
+network/docker-compose-e2e.yaml
+network/ledgers
+network/ledgers-backup
+network/hfc-key-store/
 
 chaincode-docker-devmode/myc.block
 chaincode-docker-devmode/chaincode/sacc/sacc
-chaincode-docker-devmode/FairShare/chaincode/chaincodeFF
+chaincode-docker-devmode/network/chaincode/chaincodeFF
 
 # fabric sdk node modules
 app/node_modules/
