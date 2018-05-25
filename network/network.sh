@@ -62,6 +62,7 @@ function networkDown () {
     docker rmi -f $DOCKER_IMAGE_IDS
   fi
     rm -f docker-compose-e2e.yaml
+    rm -r hfc-key-store 
   
 }
 
