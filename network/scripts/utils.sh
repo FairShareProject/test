@@ -80,21 +80,11 @@ instantiateChaincode () {
 	setGlobals $PEER $ORG
 	VERSION=${3:-2.0}
 
-	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
-	# lets supply it directly as we know it using the "-o" option
-	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-                set -x
+	
 		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer')" >&log.txt
-		res=$?
-                set +x
-	else
-                set -x
-		peer chaincode instantiate -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer')" >&log.txt
-		res=$?
-                set +x
-	fi
-	cat log.txt
-	verifyResult $res "Chaincode instantiation on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' failed"
+		
+	
+	# verifyResult $res "Chaincode instantiation on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' failed"
 	echo "===================== Chaincode Instantiation on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' is successful ===================== "
 	echo
 }
@@ -144,20 +134,14 @@ fetchChannelConfig() {
   setOrdererGlobals
 
   echo "Fetching the most recent configuration block for the channel"
-  if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-    set -x
+
     peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNEL --cafile $ORDERER_CA
-    set +x
-  else
-    set -x
-    peer channel fetch config config_block.pb -o orderer.example.com:7050 -c $CHANNEL --tls --cafile $ORDERER_CA
-    set +x
-  fi
+ 
 
   echo "Decoding config block to JSON and isolating config to ${OUTPUT}"
-  set -x
+
   configtxlator proto_decode --input config_block.pb --type common.Block | jq .data.data[0].payload.data.config > "${OUTPUT}"
-  set +x
+
 }
 
 # signConfigtxAsPeerOrg <org> <configtx.pb>
@@ -195,19 +179,9 @@ chaincodeInvoke () {
 	setGlobals $PEER $ORG
 	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
 	# lets supply it directly as we know it using the "-o" option
-	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-                set -x
 		peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -c '{"Args":["newAid","c","aid","org3"]}' >&log.txt
-		res=$?
-                set +x
-	else
-                set -x
-		peer chaincode invoke -o orderer.example.com:7050  --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -c '{"Args":["newAid","c","b","19"]}' >&log.txt
-		res=$?
-                set +x
-	fi
-	cat log.txt
-	verifyResult $res "Invoke execution on peer${PEER}.org${ORG} failed "
+	
+	# verifyResult $res "Invoke execution on peer${PEER}.org${ORG} failed "
 	echo "===================== Invoke transaction on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' is successful ===================== "
 	echo
 }
