@@ -9,21 +9,21 @@
 .DS_Store
 .project
 
-first-network/node_modules
-first-network/channel-artifacts/*.tx
-first-network/channel-artifacts/*.block
-first-network/crypto-config/*
-first-network/docker-compose-e2e.yaml
-first-network/ledgers
-first-network/ledgers-backup
-first-network/hfc-key-store/
+FairShare/node_modules
+FairShare/channel-artifacts/*.tx
+FairShare/channel-artifacts/*.block
+FairShare/crypto-config/*
+FairShare/docker-compose-e2e.yaml
+FairShare/ledgers
+FairShare/ledgers-backup
+FairShare/hfc-key-store/
 
 chaincode-docker-devmode/myc.block
 chaincode-docker-devmode/chaincode/sacc/sacc
-chaincode-docker-devmode/chaincode/chaincode_example02/chaincode_example02
+chaincode-docker-devmode/FairShare/chaincode/chaincodeFF
 
 # fabric sdk node modules
-fabcar/node_modules/
-fabcar/package-lock.json
-fabcar/hfc-key-store/
+app/node_modules/
+app/package-lock.json
+app/hfc-key-store/
 

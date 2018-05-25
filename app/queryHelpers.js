@@ -8,7 +8,7 @@ var os = require('os');
 
 var fabric_client = new Fabric_Client();
 
-// setup the fabric network
+// setting up the network
 var channel = fabric_client.newChannel('mychannel');
 var peer = fabric_client.newPeer('grpc://localhost:7051');
 channel.addPeer(peer);
@@ -24,21 +24,16 @@ console.log('Store path:'+store_path);
 var tx_id = null;
 
 var keyStore = function(state_store){
-	// assign the store to the fabric client
 	fabric_client.setStateStore(state_store);
 	var crypto_suite = Fabric_Client.newCryptoSuite();
-	// use the same location for the state store (where the users' certificate are kept)
-	// and the crypto store (where the users' keys are kept)
 	var crypto_store = Fabric_Client.newCryptoKeyStore({path: store_path});
 	crypto_suite.setCryptoKeyStore(crypto_store);
 	fabric_client.setCryptoSuite(crypto_suite);
-
-	// get the enrolled user from persistence, this user will sign all requests
 	return fabric_client.getUserContext('user1', true);
 }
 
 var query = function (req, res) {
-	console.log("getAlllll",req.body)
+	console.log("query",req.body)
 	Fabric_Client.newDefaultKeyValueStore({ path: store_path
 }).then(keyStore).then((user_from_store) => {
 	if (user_from_store && user_from_store.isEnrolled()) {
@@ -55,11 +50,10 @@ var query = function (req, res) {
 		args: [req.body.args]
 	};
 
-	// send the query proposal to the peer
 	return channel.queryByChaincode(request);
 }).then((query_responses) => {
 	console.log("Query has completed, checking results");
-	// query_responses could have more than one results if there multiple peers were used as targets
+	// query_responses number
 	if (query_responses && query_responses.length == 2 ) {
 		if (query_responses[0] instanceof Error || query_responses[1] instanceof Error) {
 			console.error("error from query = ", query_responses[0]);
@@ -107,7 +101,6 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 }).then((results) => {
 	var proposalResponses = results[0];
 	var proposal = results[1];
-	//console.log('--------->',results[1])
 	let isProposalGood = false;
 	if (proposalResponses && proposalResponses[0].response &&
 		proposalResponses[0].response.status === 200) {
@@ -117,9 +110,9 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 			console.error('Transaction proposal was bad');
 		}
 	if (isProposalGood) {
-		console.log(util.format(
-			'Successfully sent Proposal and received ProposalResponse: Status - %s, message - "%s"',
-			proposalResponses[0].response.status, proposalResponses[0].response.message));
+		// console.log(util.format(
+		// 	'Successfully sent Proposal and received ProposalResponse: Status - %s, message - "%s"',
+		// 	proposalResponses[0].response.status, proposalResponses[0].response.message));
 
 		// build up the request for the orderer to have the transaction committed
 		var request = {
@@ -133,11 +126,14 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 		var transaction_id_string = tx_id.getTransactionID(); //Get the transaction ID string to be used by the event processing
 		var promises = [];
 
+		// Send the proposal responses that contain the endorsements of a transaction proposal to the orderer for further processing. This is the 2nd phase of the transaction lifecycle in the fabric. 
 		var sendPromise = channel.sendTransaction(request);
-		promises.push(sendPromise); //we want the send transaction first, so that we know where to check status
+		promises.push(sendPromise); 
+		//we want the send transaction first, so that we know where to check status
 
 		// get an eventhub once the fabric client has a user assigned. The user
 		// is required bacause the event registration must be signed
+		// An event hub object encapsulates the properties of an event stream on a peer node, through which the peer publishes notifications of blocks being committed in the channel's ledger.
 		let event_hub = fabric_client.newEventHub();
 		event_hub.setPeerAddr('grpc://localhost:7053');
 
@@ -179,26 +175,11 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 		throw new Error('Failed to send Proposal or receive valid response. Response null or status is not 200. exiting...');
 	}
 })
-// .then((results) => {
-// 	console.log('Send transaction promise and event listener promise have completed');
-// 	// check the results in the order the promises were added to the promise all list
-// 	if (results && results[0] && results[0].status === 'SUCCESS') {
-// 		console.log('Successfully sent transaction to the orderer.');
-// 	} else {
-// 		console.error('Failed to order the transaction. Error code: ' + response.status);
-// 	}
 
-// 	if(results && results[1] && results[1].event_status === 'VALID') {
-// 		console.log('Successfully committed the change to the ledger by the peer');
-// 	} else {
-// 		console.log('Transaction failed to be committed to the ledger due to ::'+results[1].event_status);
-// 	}
-// })
 .catch((err) => {
 	console.error('Failed to invoke successfully :: ' + err);
 });
 }
 
-//module.exports.getAll = getAll
 module.exports.query = query
 module.exports.invoke = invoke
