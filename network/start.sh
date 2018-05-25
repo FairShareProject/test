@@ -2,6 +2,6 @@
 
 ./network.sh down
 
-./network.sh generate
+#./network.sh generate
 
 ./network.sh up
