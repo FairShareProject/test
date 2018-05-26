@@ -25,5 +25,5 @@ chaincode-docker-devmode/network/chaincode/chaincodeFF
 # fabric sdk node modules
 app/node_modules/
 app/package-lock.json
-app/hfc-key-store/
+app/react-client/dist/bundle.js
 

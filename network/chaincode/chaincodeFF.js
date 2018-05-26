@@ -1,9 +1,3 @@
-/*
-# Copyright IBM Corp. All Rights Reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
-*/
-
 const shim = require('fabric-shim');
 const util = require('util');
 
@@ -74,7 +68,7 @@ var Chaincode = class {
     // if (args.length != 3) {
     //   throw new Error('Incorrect number of arguments. Expecting 3');
     // }
-
+    //if(args[4] === "admin"){
     let A = args[0];
     let B = args[1];
     if (!A || !B) {
@@ -94,26 +88,12 @@ var Chaincode = class {
     // }
     let Aval = parseInt(Avalbytes.toString());
 
-    //let Bvalbytes = await stub.getState(B);
-    // if (!Bvalbytes) {
-    //   throw new Error('Failed to get state of asset holder B');
-    // }
-
-    //let Bval = parseInt(Bvalbytes.toString());
-    // Perform the execution
-    //let amount = parseInt(args[2]);
-    // if (typeof amount !== 'number') {
-    //   throw new Error('Expecting integer value for amount to be transaferred');
-    // }
-
-    // Aval = Aval - amount;
-    // Bval = Bval + amount;
-    //console.info(util.format('Aval = %d, Bval = %d\n', Aval, Bval));
-
     // Write the states back to the ledger
     await stub.putState(A, Buffer.from(JSON.stringify(aid)));
     //await stub.putState(B, Buffer.from(Bval.toString()));
-
+// } else {
+//   throw new Error('Access denied: Authorization error');
+// }
   }
 
   // Deletes an entity from state
@@ -228,6 +208,26 @@ async getAllResults(iterator, isHistory) {
 
     return Buffer.from(JSON.stringify(results));
   }
+
+
+async registerUser(stub,args){
+    let user = {
+      docType: 'user',
+      username: args[0],
+      password: args[1] 
+    }
+     await stub.putState(args[0], Buffer.from(JSON.stringify(user)));
+  }
+async queryUser(stub,args){
+   let user = await stub.getState(args[0]);
+    if (!user) {
+      jsonResp.error = 'Failed to get state for ' + args[0];
+      throw new Error(JSON.stringify(jsonResp));
+    }
+    return user
+    
+}
+
 };
 
 shim.start(new Chaincode());

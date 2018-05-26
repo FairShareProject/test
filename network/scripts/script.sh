@@ -37,7 +37,6 @@ createChannel() {
 		peer channel create -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx >&log.txt
 	
 	cat log.txt
-	# verifyResult $res "Channel creation failed"
 	echo "===================== Channel \"$CHANNEL_NAME\" is created successfully ===================== "
 	echo
 }
@@ -73,8 +72,7 @@ instantiateChaincode 0 1
 
 # Query chaincode on peer0.org1
 echo "Querying chaincode on peer0.org1..."
-chaincodeQuery 1 1 '{"docType":"aid","familyId":"1","amount":200,"organization":"organization"}'
-
+chaincodeQuery 1 1 
 # Invoke chaincode on peer0.org1
 echo "Sending invoke transaction on peer0.org1..."
 chaincodeInvoke 0 1
