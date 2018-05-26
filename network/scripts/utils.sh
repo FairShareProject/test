@@ -1,14 +1,5 @@
 
-verifyResult () {
-	if [ $1 -ne 0 ] ; then
-		echo "!!!!!!!!!!!!!!! "$2" !!!!!!!!!!!!!!!!"
-    echo "========= ERROR !!! FAILED to execute End-2-End Scenario ==========="
-		echo
-   		exit 1
-	fi
-}
 
-# Set OrdererOrg.Admin globals
 setOrdererGlobals() {
         CORE_PEER_LOCALMSPID="OrdererMSP"
         CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
@@ -36,8 +27,6 @@ setGlobals () {
 
 
 
-
-## Sometimes Join takes time hence RETRY at least for 5 times
 joinChannelWithRetry () {
 	PEER=$1
 	ORG=$2
@@ -56,7 +45,7 @@ joinChannelWithRetry () {
 	else
 		COUNTER=1
 	fi
-	verifyResult $res "After $MAX_RETRY attempts, peer${PEER}.org${ORG} has failed to Join the Channel"
+	
 }
 
 installChaincode () {
@@ -69,7 +58,7 @@ installChaincode () {
 	res=$?
         set +x
 	cat log.txt
-	verifyResult $res "Chaincode installation on peer${PEER}.org${ORG} has Failed"
+	
 	echo "===================== Chaincode is installed on peer${PEER}.org${ORG} ===================== "
 	echo
 }
@@ -83,8 +72,6 @@ instantiateChaincode () {
 	
 		peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -l node -v 2.1 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('Org1MSP.peer')" >&log.txt
 		
-	
-	# verifyResult $res "Chaincode instantiation on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' failed"
 	echo "===================== Chaincode Instantiation on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' is successful ===================== "
 	echo
 }
@@ -124,9 +111,6 @@ chaincodeQuery () {
 	 exit 1
   fi
 }
-
-# fetchChannelConfig <channel_id> <output_json>
-# Writes the current channel config for a given channel to a JSON file
 fetchChannelConfig() {
   CHANNEL=$1
   OUTPUT=$2
@@ -144,8 +128,6 @@ fetchChannelConfig() {
 
 }
 
-# signConfigtxAsPeerOrg <org> <configtx.pb>
-# Set the peerOrg admin of an org and signing the config update
 signConfigtxAsPeerOrg() {
         PEERORG=$1
         TX=$2
@@ -155,8 +137,7 @@ signConfigtxAsPeerOrg() {
         set +x
 }
 
-# createConfigUpdate <channel_id> <original_config.json> <modified_config.json> <output.pb>
-# Takes an original and modified config, and produces the config update tx which transitions between the two
+
 createConfigUpdate() {
   CHANNEL=$1
   ORIGINAL=$2
@@ -177,11 +158,8 @@ chaincodeInvoke () {
 	PEER=$1
 	ORG=$2
 	setGlobals $PEER $ORG
-	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
-	# lets supply it directly as we know it using the "-o" option
-		peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -c '{"Args":["newAid","c","aid","org3"]}' >&log.txt
+		peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -c '{"Args":["registerUser","admin","admin"]}' >&log.txt
 	
-	# verifyResult $res "Invoke execution on peer${PEER}.org${ORG} failed "
 	echo "===================== Invoke transaction on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' is successful ===================== "
 	echo
 }

@@ -20,6 +20,11 @@ app.post('/query', queryHelpers.query);
 
 app.post('/invoke', queryHelpers.invoke);
 
+app.post('/login', queryHelpers.login);
+
+app.post('/signUp', queryHelpers.signUp);
+
+
 app.listen(3000, function() {
   console.log('listening on port 3000!');
 });
